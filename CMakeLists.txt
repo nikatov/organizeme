@@ -3,7 +3,7 @@ project(organizeme VERSION 0.0.1 LANGUAGES CXX)
 
 # Установка переменных CMake
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -19,12 +19,11 @@ configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
 # Требовать обработку файла "organizeme/CMakeFiles.txt":
 add_subdirectory(organizeme)
 
-# Добавить в сборку исполняемый файл "organizeme":
-add_executable(executable_example_1 main_example_1.cpp)
+# Добавить в сборку исполняемый файл:
+add_executable(package_test main.cpp)
 
-# Скомпоновать исполняемый файл "organizeme" со
-# скомпилированными статическими библиотеками отдельных модулей:
-target_link_libraries(executable_example_1 module_example_1 module_example_2 module_example_3)
+# Скомпоновать исполняемый файл со статическими библиотеками отдельных модулей:
+target_link_libraries(package_test package)
 
-# Установить исполняемый файл "organizeme" в директорию "bin":
-install(TARGETS executable_example_1 DESTINATION ${EXECUTABLE_OUTPUT_PATH})
+# Установить исполняемый файл в директорию "bin":
+install(TARGETS package_test DESTINATION ${EXECUTABLE_OUTPUT_PATH})
