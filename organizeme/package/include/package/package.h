@@ -3,23 +3,59 @@
 #include <cinttypes>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "changetask.h"
 
-struct TaskData {
-    uint8_t *data;
+enum operationType {ADD_TASK, CHANGE_TASK, DELETE_TASK, ADD_TASK_GROUP, CHANGE_TASK_GROUP,
+                    DELETE_TASK_GROUP, ADD_USER_GROUP, CHANGE_USER_GROUP, DELETE_USER_GROUP,
+                    };
+
+struct Data {
     uint32_t size;
 
-    TaskData(uint8_t *data, uint32_t size) : data(data), size(size) {}
+    Data(uint32_t size) : size(size) {}
 };
 
-uint8_t* encodePackage(int64_t idUser, std::string password, std::vector<ChangeTask> tasks);
+struct BinaryData : Data {
+    uint8_t *data;
+    
+    BinaryData(uint8_t *data, uint32_t size) : Data(size), data(data) {}
+};
+
+struct TaskData : Data {
+    ChangeTask *task;
+
+    TaskData(ChangeTask *task, uint32_t size) : Data(size), task(task) {}
+};
+
+struct Header {
+    uint64_t idUser;
+    std::string password;
+    uint32_t numOfOperations;
+    operationType opType;
+
+    void printInfo() {
+        std::cout << "------- HEADER --------" << std::endl;
+        std::cout << "IdUser: " << idUser << std::endl;
+        std::cout << "Password: " << password << std::endl;
+        std::cout << "NumOfOperations: " << numOfOperations << std::endl;
+        std::cout << "OperationType: " << opType << std::endl;
+        std::cout << "-----------------------" << std::endl;
+    }
+};
+
+uint8_t* encodePackage(Header &h, std::vector<ChangeTask> tasks);
 
 std::vector<ChangeTask> decodePackage(uint8_t *package);
 // Выделяет 44 байта на куче, формирует header и возвращает указатель на 44 байта
-uint8_t* getHeader(uint32_t numOfOperations, uint64_t idUser, std::string password);
+uint8_t* encodeHeader(Header h);
 
-TaskData getTask(ChangeTask task);
+Header* decodeHeader(uint8_t *package);
+
+BinaryData encodeTask(ChangeTask task);
+
+TaskData decodeTask(uint8_t *package);
 
 // Функция нужна для записи в переменной размером больше 1 байта в 
 // участок массива uint8_t

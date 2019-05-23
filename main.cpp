@@ -1,10 +1,25 @@
 #include <vector>
 
-#include "package/package.h"
+#include "organizeme/package/include/package/package.h"
 
 int main(){
+
+    Header h;
+    h.idUser = 10;
+    h.password = "HelloWorld";
+    h.opType = ADD_TASK;
+    h.numOfOperations = 1;
+
+    h.printInfo();
+    uint8_t *header = encodeHeader(h);
+    Header *h2 = decodeHeader(header);
+
+    h2->printInfo();
+
+    // Тестирование передачи данных Task
+    std::cout << "Task: " << std::endl;
     std::vector<ChangeTask> tasks;
-    ChangeTask task(ADD);
+    ChangeTask task;
     task.setId(1);
     task.setIdGroupTask(2);
     task.setIdUser(3);
@@ -19,7 +34,7 @@ int main(){
 
     task.printInfo();
 
-    uint8_t *package = encodePackage(10, "AWWWWA", tasks);
+    uint8_t *package = encodePackage(h, tasks);
 
     std::vector<ChangeTask> recievedTasks;
     recievedTasks = decodePackage(package);

@@ -1,126 +1,86 @@
-#include "package.h"
+#include "../include/package/package.h"
 
-uint8_t* encodePackage(int64_t idUser, std::string password, std::vector<ChangeTask> tasks) {
-    uint8_t *header = getHeader(tasks.size(), idUser, password);
-    std::vector<TaskData> tasksEncoded;
-    uint64_t packageSize = 44;
+uint8_t* encodePackage(Header &h, std::vector<ChangeTask> tasks) {
+    // Закодируем заголовок
+    uint8_t *header = encodeHeader(h);
+    std::vector<BinaryData> tasksEncoded;
+    // Размер заголовка -- 48 байт
+    uint64_t packageSize = 48;
+    // Кодируем все переданные таски и вычисляем общий размер пакета
     for(int i = 0; i < tasks.size(); ++i){
-        tasksEncoded.push_back(getTask(tasks.at(i)));
+        tasksEncoded.push_back(encodeTask(tasks.at(i)));
         packageSize += tasksEncoded.at(i).size;
     }
+    // Выделяем память под пакет
     uint8_t *package = new uint8_t[packageSize];
-    for(int i = 0; i < 44; ++i){
+    // Записываем заголовок в пакет
+    for(int i = 0; i < 48; ++i){
         package[i] = header[i];
     }
-    uint64_t curPackageSize = 44;
+    uint64_t curPackageSize = 48;
+    // Записываем таски в пакет
     for(int k = 0; k < tasksEncoded.size(); ++k){
         for(int i = 0; i < tasksEncoded.at(k).size; ++i){
             package[curPackageSize] = tasksEncoded.at(k).data[i];
             ++curPackageSize;
         }
     }
-    // Освобождаем память под header
+    // Освобождаем память
     delete[] header;
     for(int i = 0; i < tasksEncoded.size(); ++i){
         delete[] tasksEncoded.at(i).data;
     }
-    
+    // Возвращаем результат
     return package;
 }
 
 std::vector<ChangeTask> decodePackage(uint8_t *package) {
-    uint32_t numOfOperations = (uint32_t) *package;
-    uint64_t idUser = (uint64_t) *(package + 4);
-    std::string password((char *)(package + 12));
+    Header *h = decodeHeader(package);
     std::vector<ChangeTask> changeTasks;
-    uint32_t pointerOffset = 44;
-    for(int k = 0; k < numOfOperations; ++k){
-        operationType opType = (operationType)((uint8_t) *(package + pointerOffset));
-        ChangeTask task(opType);
-        pointerOffset += 1;
-        uint16_t changeFlags = 0;
-        getBytes((package + pointerOffset), &changeFlags);
-        pointerOffset += 2;
-        if(changeFlags & 0x0001){
-            task.setId((int64_t) *(package + pointerOffset));
-            pointerOffset += 8;
-        }
-        if(changeFlags & 0x0002){
-            task.setIdGroupTask((int64_t) *(package + pointerOffset));
-            pointerOffset += 8;
-        }
-        if(changeFlags & 0x0004){
-            task.setIdUser((int64_t) *(package + pointerOffset));
-            pointerOffset += 8;
-        }
-        if(changeFlags & 0x0008){
-            uint8_t isFinished = *(package + pointerOffset);
-            if(isFinished != 0) {
-                task.setIsFinished(true);
-            }
-            pointerOffset += 1;
-        }
-        if(changeFlags & 0x0010){
-            task.setTimePlanned((int64_t) *(package + pointerOffset));
-            pointerOffset += 8;
-        }
-        if(changeFlags & 0x0020){
-            task.setTimeDoingTask((int64_t) *(package + pointerOffset));
-            pointerOffset += 8;
-        }
-        if(changeFlags & 0x0040){
-            task.setTimeDeadline((int64_t) *(package + pointerOffset));
-            pointerOffset += 8;
-        }
-        if(changeFlags & 0x0080){
-            uint16_t stringSize = (uint16_t) *(package + pointerOffset);
-            pointerOffset += 2;
-            std::string title;
-            for(int i = 0; i < stringSize; ++i){
-                title.push_back((char) *(package + pointerOffset + i));
-            }
-            task.setTitle(title);
-            pointerOffset += stringSize;
-        }
-        if(changeFlags & 0x0100){
-            uint16_t stringSize = (uint16_t) *(package + pointerOffset);
-            pointerOffset += 2;
-            std::string description;
-            for(int i = 0; i < stringSize; ++i){
-                description.push_back((char) *(package + pointerOffset + i));
-            }
-            task.setDescription(description);
-            pointerOffset += stringSize;
-        }
-        if(changeFlags & 0x0200){
-            task.setPriority(*(package + pointerOffset));
-            pointerOffset += 1;
-        }
-        changeTasks.push_back(task);
+    uint32_t pointerOffset = 48;
+    for(int k = 0; k < h->numOfOperations; ++k){
+        // operationType opType = (operationType)((uint8_t) *(package + pointerOffset));
+        TaskData taskData = decodeTask(package + pointerOffset);
+        pointerOffset += taskData.size;
+        changeTasks.push_back(*taskData.task);
     }
     return changeTasks;
 }
 
-// Выделяет 44 байта на куче, формирует header и возвращает указатель на 44 байта
-uint8_t* getHeader(uint32_t numOfOperations, uint64_t idUser, std::string password){
-    uint8_t *header = new uint8_t[44];
-    writeBytes(numOfOperations, header);
-    writeBytes(idUser, header+4);
-    for(int i = 0; i < password.size() && i < 31; ++i){
-        header[12 + i] = (uint8_t)password.at(i);
+// Выделяет 48 байта на куче, формирует header и возвращает указатель на 48 байта
+// 0-8 байт -- idUser, 8-40 байт -- password, 40-44 байт -- operationType, 44-48 -- numOfOpeartions
+uint8_t* encodeHeader(Header h){
+    uint8_t *header = new uint8_t[48];
+    writeBytes(h.idUser, header);
+    for(int i = 0; i < h.password.size() && i < 31; ++i){
+        header[8 + i] = (uint8_t)h.password.at(i);
     }
-    if(password.size() < 31){
-        header[12 + password.size()] = '\0';
+    if(h.password.size() < 31){
+        header[8 + h.password.size()] = '\0';
     } else {
-        header[12 + 31] = '\0';
+        header[8 + 31] = '\0';
     }
+    writeBytes((uint32_t)h.opType, header+40);
+    writeBytes(h.numOfOperations, header+44);
     return header;
 }
 
-TaskData getTask(ChangeTask task){
-    uint8_t opType = task.getOperationType();             // Тип операции
+// Декодирует массив uint8_t* в Header* 
+Header* decodeHeader(uint8_t *package){
+    Header *h = new Header();
+    h->idUser = (uint64_t) *(package);
+    std::string password((char *)(package + 8));
+    h->password = password;
+    h->opType = (operationType) *(package + 40);
+    h->numOfOperations = (uint32_t) *(package + 44);  
+    return h;
+}
+
+// Кодирует одну задачу в структуру, в которой хранится массив uint8_t и размер массива
+BinaryData encodeTask(ChangeTask task){   
+    // uint8_t opType = task.getOperationType();          // Тип операции
     uint16_t changeFlags = 0;       // Флаги изменения
-    uint64_t sizeBytes = 3;
+    uint64_t sizeBytes = 2;
     if(task.getId() >= 0) {
         changeFlags |= 0x0001;
         sizeBytes += 8;
@@ -161,10 +121,10 @@ TaskData getTask(ChangeTask task){
         changeFlags |= 0x0200;
         sizeBytes += 1;
     }
-    TaskData taskData(new uint8_t[sizeBytes], sizeBytes);  // ChangeTask в массиве байт
-    taskData.data[0] = (uint8_t) opType;
-    writeBytes(changeFlags, (taskData.data + 1));
-    uint32_t pointerOffset = 3;
+    BinaryData taskData(new uint8_t[sizeBytes], sizeBytes);  // ChangeTask в массиве байт
+    // taskData.data[0] = (uint8_t) opType;
+    writeBytes(changeFlags, (taskData.data));
+    uint32_t pointerOffset = 2;
     if(task.getId() >= 0) {
         writeBytes((uint64_t)task.getId(), taskData.data + pointerOffset);
         pointerOffset += 8;
@@ -205,6 +165,70 @@ TaskData getTask(ChangeTask task){
         taskData.data[pointerOffset] = task.getPriority();
     }
     return taskData;
+}
+
+TaskData decodeTask(uint8_t *package){
+    ChangeTask *task = new ChangeTask();
+    uint32_t pointerOffset = 0;
+    uint16_t changeFlags = 0;
+    getBytes((package + pointerOffset), &changeFlags);
+    pointerOffset += 2;
+    if(changeFlags & 0x0001){
+        task->setId((int64_t) *(package + pointerOffset));
+        pointerOffset += 8;
+    }
+    if(changeFlags & 0x0002){
+        task->setIdGroupTask((int64_t) *(package + pointerOffset));
+        pointerOffset += 8;
+    }
+    if(changeFlags & 0x0004){
+        task->setIdUser((int64_t) *(package + pointerOffset));
+        pointerOffset += 8;
+    }
+    if(changeFlags & 0x0008){
+        uint8_t isFinished = *(package + pointerOffset);
+        if(isFinished != 0) {
+            task->setIsFinished(true);
+        }
+        pointerOffset += 1;
+    }
+    if(changeFlags & 0x0010){
+        task->setTimePlanned((int64_t) *(package + pointerOffset));
+        pointerOffset += 8;
+    }
+    if(changeFlags & 0x0020){
+        task->setTimeDoingTask((int64_t) *(package + pointerOffset));
+        pointerOffset += 8;
+    }
+    if(changeFlags & 0x0040){
+        task->setTimeDeadline((int64_t) *(package + pointerOffset));
+        pointerOffset += 8;
+    }
+    if(changeFlags & 0x0080){
+        uint16_t stringSize = (uint16_t) *(package + pointerOffset);
+        pointerOffset += 2;
+        std::string title;
+        for(int i = 0; i < stringSize; ++i){
+            title.push_back((char) *(package + pointerOffset + i));
+        }
+        task->setTitle(title);
+        pointerOffset += stringSize;
+    }
+    if(changeFlags & 0x0100){
+        uint16_t stringSize = (uint16_t) *(package + pointerOffset);
+        pointerOffset += 2;
+        std::string description;
+        for(int i = 0; i < stringSize; ++i){
+            description.push_back((char) *(package + pointerOffset + i));
+        }
+        task->setDescription(description);
+        pointerOffset += stringSize;
+    }
+    if(changeFlags & 0x0200){
+        task->setPriority(*(package + pointerOffset));
+        pointerOffset += 1;
+    }
+    return TaskData(task, pointerOffset);
 }
 
 // FIXME: Проверить как улучшить функцию

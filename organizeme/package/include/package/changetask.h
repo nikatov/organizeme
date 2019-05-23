@@ -6,11 +6,9 @@
 
 #include "generictask.h"
 
-enum operationType {ADD, CHANGE, DELETE};
-
 class ChangeTask : private GenericTask {
     public:
-        ChangeTask(operationType opType) : GenericTask(-1, -1, -1, false, -1, -1, -1, "", "", -1) {}
+        ChangeTask() : GenericTask(-1, -1, -1, false, -1, -1, -1, "", "", -1) {}
         void printInfo() {
             std::cout << "Id: " << id << std::endl;
             std::cout << "IdGroupTask: " << idGroupTask << std::endl;
@@ -34,7 +32,6 @@ class ChangeTask : private GenericTask {
         std::string getTitle() { return title; }
         std::string getDescription() { return description; }
         int8_t getPriority() { return priority; }
-        operationType getOperationType() { return opType; }
         // Сеттеры
         void setId(int64_t id) { this->id = id; }
         void setIdGroupTask(int64_t idGroupTask) { this->idGroupTask = idGroupTask; }
@@ -46,7 +43,5 @@ class ChangeTask : private GenericTask {
         void setTitle(std::string title) { this->title = title; }
         void setDescription(std::string description) { this->description = description; }
         void setPriority(int8_t priority) { this->priority = priority; }
-        void setOperationType(operationType opType) { this->opType = opType; }
     private:
-        operationType opType;
 };
