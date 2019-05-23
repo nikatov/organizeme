@@ -18,12 +18,4 @@ configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
 
 # Требовать обработку файла "organizeme/CMakeFiles.txt":
 add_subdirectory(organizeme)
-
-# Добавить в сборку исполняемый файл:
-add_executable(package_test main.cpp)
-
-# Скомпоновать исполняемый файл со статическими библиотеками отдельных модулей:
-target_link_libraries(package_test package)
-
-# Установить исполняемый файл в директорию "bin":
-install(TARGETS package_test DESTINATION ${EXECUTABLE_OUTPUT_PATH})
+add_subdirectory(tests)
