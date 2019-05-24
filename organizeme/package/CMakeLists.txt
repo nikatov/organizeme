@@ -9,12 +9,8 @@ include(addprefix)
 addprefix(src/ SRC_FILES)
 addprefix(include/package/ INCLUDE_FILES)
 
-find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
-
 # Добавить в сборку статическую библиотеку "module_example_1":
 add_library(package STATIC ${SRC_FILES} ${INCLUDE_FILES})
-
-target_link_libraries(package ${Boost_LIBRARIES})
 
 # Внутри модуля подключение заголовочных файлов происходит через #include "header.h"
 # Из сторонних модулей подключение происходит через #include "package/header.h"
