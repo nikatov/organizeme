@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "organizeme/package/include/package/package.h"
+#include "package/package.h"
 
 int main(){
 
@@ -36,12 +36,31 @@ int main(){
 
     uint8_t *package = encodePackage(h, tasks);
 
-    std::vector<ChangeTask> recievedTasks;
-    recievedTasks = decodePackage(package);
+    Package* decodedPackage = decodePackage(package);
 
-    recievedTasks.at(0).printInfo();
+    switch (decodedPackage->body.which()){
+        case VEC_CHANGE_USER:
+            std::cout << "Not implemented!" << std::endl;
+            break;
+        case VEC_CHANGE_TASK:
+            std::vector<ChangeTask> v = boost::get<std::vector<ChangeTask>>(decodedPackage->body);
+            v.at(0).printInfo();
+    }
 
-    delete[] package;
+    // тестирование передачи данных user
+
+    h.opType = ADD_USER;
+    std::vector<ChangeUser> users;
+    ChangeUser user(1, "2", "3", "4", "5", "6");
+    user.printInfo();
+    users.push_back(user);
+    uint8_t *encUser = encodePackage(h, users);
+    decodedPackage = decodePackage(encUser);
+    if(decodedPackage->body.which() == VEC_CHANGE_USER){
+        std::vector<ChangeUser> v = boost::get<std::vector<ChangeUser>>(decodedPackage->body);
+        v.at(0).printInfo();
+    }
+    // delete[] decodedPackage;
 
     return 0;
 }
