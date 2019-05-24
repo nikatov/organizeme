@@ -80,6 +80,23 @@ int main(){
         v.at(1).printInfo();
     }
 
+    // Тестирование передачи данных taskGroup
+    h.opType = ADD_TASK_GROUP;
+    ChangeTaskGroup chTaskGroup1(1, 2, "TASK#1");
+    chTaskGroup1.printInfo();
+    ChangeTaskGroup chTaskGroup2(55, 31, "OLOLOLO");
+    chTaskGroup2.printInfo();
+    std::vector<ChangeTaskGroup> chTaskGroups;
+    chTaskGroups.push_back(chTaskGroup1);
+    chTaskGroups.push_back(chTaskGroup2);
+    uint8_t *encTaskGroups = encodePackage(h, chTaskGroups);
+    decodedPackage = decodePackage(encTaskGroups);
+    if(decodedPackage->body.which() == VEC_CHANGE_TASK_GROUP){
+        auto v = boost::get<std::vector<ChangeTaskGroup>>(decodedPackage->body);
+        v.at(0).printInfo();
+        v.at(1).printInfo();
+    }
+
     // delete[] decodedPackage;
 
     return 0;
