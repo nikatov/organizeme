@@ -47,7 +47,6 @@ int main(){
     }
 
     // тестирование передачи данных user
-
     h.opType = ADD_USER;
     std::vector<ChangeUser> users;
     ChangeUser user(1, "2", "3", "4", "5", "6");
