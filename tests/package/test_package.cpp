@@ -3,7 +3,6 @@
 #include "package/package.h"
 
 int main(){
-
     Header h;
     h.idUser = 10;
     h.password = "HelloWorld";
@@ -60,6 +59,27 @@ int main(){
         std::vector<ChangeUser> v = boost::get<std::vector<ChangeUser>>(decodedPackage->body);
         v.at(0).printInfo();
     }
+
+    // Тестируем передачу UserGroup
+    std::cout << "Test UserGroup ---------------" << std::endl;
+    h.opType = ADD_USER_GROUP;
+    h.numOfOperations = 2;
+    std::vector<ChangeUserGroup> userGroups;
+    ChangeUserGroup userGroup1(1, "Spartans", false);
+    userGroup1.printInfo();
+    ChangeUserGroup userGroup2(2, "Romans", true);
+    userGroup2.printInfo();
+    userGroups.push_back(userGroup1);
+    userGroups.push_back(userGroup2);
+    uint8_t *encUserGroup = encodePackage(h, userGroups);
+    decodedPackage = decodePackage(encUserGroup);
+    if(decodedPackage->body.which() == VEC_CHANGE_USER_GROUP){
+        std::vector<ChangeUserGroup> v = boost::get<std::vector<ChangeUserGroup>>(decodedPackage->body);
+        v.at(0).printInfo();
+        // FIXME: isLocal -- должно быть 1, т.к. true
+        v.at(1).printInfo();
+    }
+
     // delete[] decodedPackage;
 
     return 0;

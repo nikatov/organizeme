@@ -34,6 +34,40 @@ uint8_t* encodePackage(Header &h, std::vector<ChangeUser> users) {
     return package;
 }
 
+uint8_t* encodePackage(Header &h, std::vector<ChangeUserGroup> userGroups) {
+    // Закодируем заголовок
+    uint8_t *header = encodeHeader(h);
+    std::vector<BinaryData> userGroupsEncoded;
+    // Размер заголовка -- 48 байт
+    uint64_t packageSize = 48;
+    // Кодируем все переданные на изменение объекты и вычисляем общий размер пакета
+    for(uint32_t i = 0; i < userGroups.size(); ++i){
+        userGroupsEncoded.push_back(encodeUserGroup(userGroups.at(i)));
+        packageSize += userGroupsEncoded.at(i).size;
+    }
+    // Выделяем память под пакет
+    uint8_t *package = new uint8_t[packageSize];
+    // Записываем заголовок в пакет
+    for(uint32_t i = 0; i < 48; ++i){
+        package[i] = header[i];
+    }
+    uint64_t curPackageSize = 48;
+    // Записываем таски в пакет
+    for(uint32_t k = 0; k < userGroupsEncoded.size(); ++k){
+        for(uint32_t i = 0; i < userGroupsEncoded.at(k).size; ++i){
+            package[curPackageSize] = userGroupsEncoded.at(k).data[i];
+            ++curPackageSize;
+        }
+    }
+    // Освобождаем память
+    delete[] header;
+    for(uint32_t i = 0; i < userGroupsEncoded.size(); ++i){
+        delete[] userGroupsEncoded.at(i).data;
+    }
+    // Возвращаем результат
+    return package;
+}
+
 uint8_t* encodePackage(Header &h, std::vector<ChangeTask> tasks) {
     // Закодируем заголовок
     uint8_t *header = encodeHeader(h);
@@ -79,6 +113,14 @@ Package* decodePackage(uint8_t *package) {
             changeUsers.push_back(*userData.user);
         }
         return new Package(h, changeUsers);
+    } else if(h->opType == ADD_USER_GROUP || h->opType == CHANGE_USER_GROUP || h->opType == DELETE_USER_GROUP){
+        std::vector<ChangeUserGroup> changeUserGroups;
+        for(uint32_t k = 0; k < h->numOfOperations; ++k){
+            UserGroupData userGroupData = decodeUserGroup(package + pointerOffset);
+            pointerOffset += userGroupData.size;
+            changeUserGroups.push_back(*userGroupData.userGroup);
+        }
+        return new Package(h, changeUserGroups);
     } else if(h->opType == ADD_TASK || h->opType == CHANGE_TASK || h->opType == DELETE_TASK){
         std::vector<ChangeTask> changeTasks;
         for(uint32_t k = 0; k < h->numOfOperations; ++k){
@@ -393,6 +435,69 @@ UserData decodeUser(uint8_t *package){
         pointerOffset += stringSize;
     }
     return UserData(user, pointerOffset);
+}
+
+BinaryData encodeUserGroup(ChangeUserGroup userGroup){
+    uint16_t changeFlags = 0;       // Флаги изменения
+    uint64_t sizeBytes = 2;
+    if(userGroup.getId() >= 0) {
+        changeFlags |= 0x0001;
+        sizeBytes += 8;
+    }
+    if(!userGroup.getGroupName().empty()) {
+        changeFlags |= 0x0002;
+        sizeBytes += userGroup.getGroupName().size() + 2;
+    }
+    if(userGroup.getIsLocal()) {
+        changeFlags |= 0x0008;
+        sizeBytes += 1;
+    }
+    BinaryData userGroupData(new uint8_t[sizeBytes], sizeBytes);
+    writeBytes(changeFlags, (userGroupData.data));
+    uint32_t pointerOffset = 2;
+    if(userGroup.getId() >= 0) {
+        writeBytes((uint64_t)userGroup.getId(), userGroupData.data + pointerOffset);
+        pointerOffset += 8;
+    }
+    if(!userGroup.getGroupName().empty()) {
+        writeBytes(userGroup.getGroupName(), (userGroupData.data + pointerOffset));
+        pointerOffset += userGroup.getGroupName().size() + 2;
+    }
+    if(userGroup.getIsLocal()) {
+        userGroupData.data[pointerOffset] = 1;
+        pointerOffset += 1;
+    }
+    return userGroupData;
+}
+
+UserGroupData decodeUserGroup(uint8_t *package){
+    ChangeUserGroup *userGroup = new ChangeUserGroup();
+    uint32_t pointerOffset = 0;
+    uint16_t changeFlags = 0;
+    getBytes((package + pointerOffset), &changeFlags);
+    pointerOffset += 2;
+    if(changeFlags & 0x0001){
+        userGroup->setId((int64_t) *(package + pointerOffset));
+        pointerOffset += 8;
+    }
+    if(changeFlags & 0x0002){
+        uint16_t stringSize = (uint16_t) *(package + pointerOffset);
+        pointerOffset += 2;
+        std::string groupName;
+        for(uint32_t i = 0; i < stringSize; ++i){
+            groupName.push_back((char) *(package + pointerOffset + i));
+        }
+        userGroup->setGroupName(groupName);
+        pointerOffset += stringSize;
+    }
+    if(changeFlags & 0x0004){
+        uint8_t isLocal = *(package + pointerOffset);
+        if(isLocal != 0) {
+            userGroup->setIsLocal(true);
+        }
+        pointerOffset += 1;
+    }
+    return UserGroupData(userGroup, pointerOffset);
 }
 
 // FIXME: Проверить как улучшить функцию

@@ -1,6 +1,6 @@
 # Список файлов, состовляющих данный модуль
 set(SRC_FILES package.cpp)
-set(INCLUDE_FILES changetask.h generictask.h package.h task.h user.h)
+set(INCLUDE_FILES changeuser.h changeusergroup.h changetaskgroup.h changetask.h generictask.h package.h task.h user.h)
 
 # Подключаем модуль addprefix
 include(addprefix)
