@@ -16,15 +16,15 @@ int main(){
     h2->printInfo();
 
     // Тестирование передачи данных Task
-    std::cout << "Task: " << std::endl;
+    std::cout << "Test Task ------------------------" << std::endl;
     std::vector<ChangeTask> tasks;
     ChangeTask task;
     task.setId(1);
     task.setIdGroupTask(2);
-    task.setIdUser(3);
+    task.setIdUser(0);
     task.setIsFinished(true);
-    task.setTimePlanned(4);
-    task.setTimeDoingTask(5);
+    task.setTimePlanned(0);
+    task.setTimeDoingTask(0);
     task.setTimeDeadline(6);
     task.setTitle("Hello");
     task.setDescription("world");
@@ -47,6 +47,7 @@ int main(){
     }
 
     // тестирование передачи данных user
+    std::cout << "Test User ----------------------" << std::endl;
     h.opType = ADD_USER;
     std::vector<ChangeUser> users;
     ChangeUser user(1, "2", "3", "4", "5", "6");
@@ -75,15 +76,15 @@ int main(){
     if(decodedPackage->body.which() == VEC_CHANGE_USER_GROUP){
         std::vector<ChangeUserGroup> v = boost::get<std::vector<ChangeUserGroup>>(decodedPackage->body);
         v.at(0).printInfo();
-        // FIXME: isLocal -- должно быть 1, т.к. true
         v.at(1).printInfo();
     }
 
     // Тестирование передачи данных taskGroup
+    std::cout << "Test taskGroup ----------------" << std::endl;
     h.opType = ADD_TASK_GROUP;
     ChangeTaskGroup chTaskGroup1(1, 2, "TASK#1");
     chTaskGroup1.printInfo();
-    ChangeTaskGroup chTaskGroup2(55, 31, "OLOLOLO");
+    ChangeTaskGroup chTaskGroup2(55, 0, "");
     chTaskGroup2.printInfo();
     std::vector<ChangeTaskGroup> chTaskGroups;
     chTaskGroups.push_back(chTaskGroup1);
