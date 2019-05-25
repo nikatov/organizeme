@@ -14,5 +14,7 @@ add_library(package STATIC ${SRC_FILES} ${INCLUDE_FILES})
 
 # Внутри модуля подключение заголовочных файлов происходит через #include "header.h"
 # Из сторонних модулей подключение происходит через #include "package/header.h"
+target_include_directories(package PRIVATE ${Boost_INCLUDE_DIR})
+
 target_include_directories(package PRIVATE include/package)
 target_include_directories(package INTERFACE include)
