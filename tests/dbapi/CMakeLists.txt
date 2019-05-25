@@ -4,7 +4,7 @@ set(TEST_SRC test_select.cpp)
 add_executable(test_select test_select.cpp)
 # Скомпоновать исполняемый файл со статическими библиотеками отдельных модулей:
 
-target_link_libraries(test_select dbapi ${PQXX_LIBRARIES})
+target_link_libraries(test_select dbapi pqxx)
 
 target_include_directories(test_select PRIVATE ${PQXX_INCLUDE_DIRECTORIES})
 
