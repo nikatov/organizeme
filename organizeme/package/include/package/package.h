@@ -6,11 +6,14 @@
 #include <iostream>
 #include <boost/variant.hpp>
 
-#include "changetask.h"
 #include "changeuser.h"
+#include "changeusergroup.h"
+#include "changetaskgroup.h"
+#include "changetask.h"
 
-enum operationType {ADD_USER, CHANGE_USER, DELETE_USER, ADD_TASK, CHANGE_TASK, DELETE_TASK, ADD_TASK_GROUP, CHANGE_TASK_GROUP,
-                    DELETE_TASK_GROUP, ADD_USER_GROUP, CHANGE_USER_GROUP, DELETE_USER_GROUP,
+enum operationType {
+                    ADD_USER, CHANGE_USER, DELETE_USER, ADD_USER_GROUP, CHANGE_USER_GROUP, DELETE_USER_GROUP,
+                    ADD_TASK_GROUP, CHANGE_TASK_GROUP, DELETE_TASK_GROUP, ADD_TASK, CHANGE_TASK, DELETE_TASK, 
                     };
 
 struct Data {
@@ -33,6 +36,16 @@ struct UserData : Data {
     UserData(ChangeUser *user, uint32_t size) : Data(size), user(user) {}
 };
 
+struct UserGroupData : Data {
+    ChangeUserGroup *userGroup;
+    UserGroupData(ChangeUserGroup *userGroup, uint32_t size) : Data(size), userGroup(userGroup) {}
+};
+
+struct TaskGroupData : Data {
+    ChangeTaskGroup *taskGroup;
+    TaskGroupData(ChangeTaskGroup *taskGroup, uint32_t size) : Data(size), taskGroup(taskGroup) {}
+};
+
 struct Header {
     uint64_t idUser;
     std::string password;
@@ -49,16 +62,22 @@ struct Header {
     }
 };
 
-enum packageType {VEC_CHANGE_USER, VEC_CHANGE_TASK};
+enum packageType {VEC_CHANGE_USER, VEC_CHANGE_USER_GROUP, VEC_CHANGE_TASK_GROUP, VEC_CHANGE_TASK};
 
 struct Package {
     Header *header;
-    boost::variant<std::vector<ChangeUser>, std::vector<ChangeTask>> body;
-    Package(Header *header, boost::variant<std::vector<ChangeUser>, std::vector<ChangeTask>> body) :
-                    header(header), body(body) {}
+    boost::variant<std::vector<ChangeUser>, std::vector<ChangeUserGroup>,
+                 std::vector<ChangeTaskGroup>, std::vector<ChangeTask>> body;
+    Package(
+            Header *header,
+            boost::variant<std::vector<ChangeUser>, std::vector<ChangeUserGroup>,
+                           std::vector<ChangeTaskGroup>, std::vector<ChangeTask>> body
+            ) : header(header), body(body) {}
 };
 
 uint8_t* encodePackage(Header &h, std::vector<ChangeUser> users);
+uint8_t* encodePackage(Header &h, std::vector<ChangeUserGroup> userGroups);
+uint8_t* encodePackage(Header &h, std::vector<ChangeTaskGroup> taskGroups);
 uint8_t* encodePackage(Header &h, std::vector<ChangeTask> tasks);
 
 Package* decodePackage(uint8_t *package);
@@ -74,6 +93,14 @@ TaskData decodeTask(uint8_t *package);
 BinaryData encodeUser(ChangeUser user);
 
 UserData decodeUser(uint8_t *package);
+
+BinaryData encodeUserGroup(ChangeUserGroup userGroup);
+
+UserGroupData decodeUserGroup(uint8_t *package);
+
+BinaryData encodeTaskGroup(ChangeTaskGroup taskGroup);
+
+TaskGroupData decodeTaskGroup(uint8_t *package);
 
 // Функция нужна для записи в переменной размером больше 1 байта в 
 // участок массива uint8_t
