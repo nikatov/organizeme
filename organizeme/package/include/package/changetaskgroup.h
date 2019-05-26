@@ -4,27 +4,24 @@
 #include <string>
 #include <iostream>
 
-class ChangeTaskGroup {
-    public:
-        ChangeTaskGroup() : id(-1), idUserGroup(-1), name("") {}
-        ChangeTaskGroup(int64_t id, int64_t idUserGroup, std::string name) : 
-                            id(id), idUserGroup(idUserGroup), name(name) {}
+#include "generictaskgroup.h"
 
-        void printInfo(){
+class ChangeTaskGroup : public GenericTaskGroup {
+    public:
+        ChangeTaskGroup() : GenericTaskGroup(0, ""), idUserGroup() {}
+        ChangeTaskGroup(int64_t id, int64_t idUserGroup, std::string name) : 
+                        GenericTaskGroup(id, name), idUserGroup(idUserGroup) {}
+
+        
+        void printInfo() {
             std::cout << "Id: " << id << std::endl;
             std::cout << "IdUserGroup: " << idUserGroup << std::endl;
             std::cout << "Name: " << name << std::endl;
         }
 
-        int64_t getId() { return id; }
-        int64_t getIdUserGroup() { return idUserGroup; }
-        std::string getName() { return name; }
+        uint64_t getIdUserGroup() { return idUserGroup; }
 
-        void setId(int64_t id) { this->id = id; }
         void setIdUserGroup(int64_t idUserGroup) { this->idUserGroup = idUserGroup; }
-        void setName(std::string name) { this->name = name; }
     private:
-        int64_t id;
-        int64_t idUserGroup;
-        std::string name;
+        uint64_t idUserGroup;
 };
