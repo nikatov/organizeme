@@ -9,7 +9,7 @@
 #include "TaskConnector.h"
 #include "package/changetask.h"
 
-tuple TaskConnector::getSqlParameters(ChangeTask &task){
+TaskConnector::tuple TaskConnector::getSqlParameters(ChangeTask &task){
     std::string parameters;
     std::string fields;
     if(task.getIdGroupTask() > 0){
@@ -71,7 +71,7 @@ std::string TaskConnector::stringWrapper(std::string &obj, fieldType type) {
 uint TaskConnector::createTask(ChangeTask &task) {
   if(task.getIdGroupTask() && task.getIdUser() && !task.getTitle().empty()) {
     tuple t = getSqlParameters(task);
-    std::cout << str("INSERT INTO tasks (") + t.fields + str(") VALUES (") + t.parameters + str(")") << std::endl;
+    std::cout << str("INSERT INTO tasks (") + t.fields + str(") VALUES (") + t.parameters + str(") RETURNING id") << std::endl;
     pqxx::result r = txn.exec(str("INSERT INTO tasks (") + t.fields + str(") VALUES (") + t.parameters + str(") RETURNING id"));
     return std::atoi(r[0][0].c_str());
   }
@@ -85,6 +85,7 @@ void TaskConnector::updateTask(ChangeTask &task) {
 }
 
 void TaskConnector::deleteTask(ChangeTask &task) {
+  std::cout << "DELETE FROM tasks WHERE id = " + txn.quote(task.getId()) << std::endl;
   pqxx::result r = txn.exec("DELETE FROM tasks WHERE id = " + txn.quote(task.getId()));
 }
 
