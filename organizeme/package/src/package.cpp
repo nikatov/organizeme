@@ -1,6 +1,6 @@
 #include "package.h"
 
-uint8_t* encodePackage(Header &h, std::vector<ChangeUser> users) {
+uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeUser> users) {
     // Закодируем заголовок
     uint8_t *header = encodeHeader(h);
     std::vector<BinaryData> usersEncoded;
@@ -34,7 +34,7 @@ uint8_t* encodePackage(Header &h, std::vector<ChangeUser> users) {
     return package;
 }
 
-uint8_t* encodePackage(Header &h, std::vector<ChangeUserGroup> userGroups) {
+uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeUserGroup> userGroups) {
     // Закодируем заголовок
     uint8_t *header = encodeHeader(h);
     std::vector<BinaryData> userGroupsEncoded;
@@ -68,7 +68,7 @@ uint8_t* encodePackage(Header &h, std::vector<ChangeUserGroup> userGroups) {
     return package;
 }
 
-uint8_t* encodePackage(Header &h, std::vector<ChangeTaskGroup> taskGroups) {
+uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeTaskGroup> taskGroups) {
     // Закодируем заголовок
     uint8_t *header = encodeHeader(h);
     std::vector<BinaryData> taskGroupsEncoded;
@@ -102,7 +102,7 @@ uint8_t* encodePackage(Header &h, std::vector<ChangeTaskGroup> taskGroups) {
     return package;
 }
 
-uint8_t* encodePackage(Header &h, std::vector<ChangeTask> tasks) {
+uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeTask> tasks) {
     // Закодируем заголовок
     uint8_t *header = encodeHeader(h);
     std::vector<BinaryData> tasksEncoded;
@@ -136,8 +136,8 @@ uint8_t* encodePackage(Header &h, std::vector<ChangeTask> tasks) {
     return package;
 }
 
-Package* decodePackage(uint8_t *package) {
-    Header *h = decodeHeader(package);
+std::shared_ptr<Package> decodePackage(uint8_t *package) {
+    std::shared_ptr<Header> h = decodeHeader(package);
     uint32_t pointerOffset = 48;
     if(h->opType == ADD_USER || h->opType == CHANGE_USER || h->opType == DELETE_USER){
         std::vector<ChangeUser> changeUsers;
@@ -146,7 +146,7 @@ Package* decodePackage(uint8_t *package) {
             pointerOffset += userData.size;
             changeUsers.push_back(*userData.user);
         }
-        return new Package(h, changeUsers);
+        return std::shared_ptr<Package>(new Package(h, changeUsers));
     } else if(h->opType == ADD_USER_GROUP || h->opType == CHANGE_USER_GROUP || h->opType == DELETE_USER_GROUP){
         std::vector<ChangeUserGroup> changeUserGroups;
         for(uint32_t k = 0; k < h->numOfOperations; ++k){
@@ -154,7 +154,7 @@ Package* decodePackage(uint8_t *package) {
             pointerOffset += userGroupData.size;
             changeUserGroups.push_back(*userGroupData.userGroup);
         }
-        return new Package(h, changeUserGroups);
+        return std::shared_ptr<Package>(new Package(h, changeUserGroups));
     } else if(h->opType == ADD_TASK_GROUP || h->opType == CHANGE_TASK_GROUP || h->opType == DELETE_TASK_GROUP){
         std::vector<ChangeTaskGroup> changeTaskGroups;
         for(uint32_t k = 0; k < h->numOfOperations; ++k){
@@ -162,7 +162,7 @@ Package* decodePackage(uint8_t *package) {
             pointerOffset += taskGroupData.size;
             changeTaskGroups.push_back(*taskGroupData.taskGroup);
         }
-        return new Package(h, changeTaskGroups);
+        return std::shared_ptr<Package>(new Package(h, changeTaskGroups));
     } else if(h->opType == ADD_TASK || h->opType == CHANGE_TASK || h->opType == DELETE_TASK){
         std::vector<ChangeTask> changeTasks;
         for(uint32_t k = 0; k < h->numOfOperations; ++k){
@@ -170,32 +170,32 @@ Package* decodePackage(uint8_t *package) {
             pointerOffset += taskData.size;
             changeTasks.push_back(*taskData.task);
         }
-        return new Package(h, changeTasks);
+        return std::shared_ptr<Package>(new Package(h, changeTasks));
     }
     return nullptr;
 }
 
 // Выделяет 48 байта на куче, формирует header и возвращает указатель на 48 байта
 // 0-8 байт -- idUser, 8-40 байт -- password, 40-44 байт -- operationType, 44-48 -- numOfOpeartions
-uint8_t* encodeHeader(Header h){
+uint8_t* encodeHeader(std::shared_ptr<Header> h){
     uint8_t *header = new uint8_t[48];
-    writeBytes(h.idUser, header);
-    for(uint32_t i = 0; i < h.password.size() && i < 31; ++i){
-        header[8 + i] = (uint8_t)h.password.at(i);
+    writeBytes(h->idUser, header);
+    for(uint32_t i = 0; i < h->password.size() && i < 31; ++i){
+        header[8 + i] = (uint8_t)h->password.at(i);
     }
-    if(h.password.size() < 31){
-        header[8 + h.password.size()] = '\0';
+    if(h->password.size() < 31){
+        header[8 + h->password.size()] = '\0';
     } else {
         header[8 + 31] = '\0';
     }
-    writeBytes((uint32_t)h.opType, header+40);
-    writeBytes(h.numOfOperations, header+44);
+    writeBytes((uint32_t)h->opType, header+40);
+    writeBytes(h->numOfOperations, header+44);
     return header;
 }
 
 // Декодирует массив uint8_t* в Header* 
-Header* decodeHeader(uint8_t *package){
-    Header *h = new Header();
+std::shared_ptr<Header> decodeHeader(uint8_t *package){
+    std::shared_ptr<Header> h(new Header());
     h->idUser = (uint64_t) *(package);
     std::string password((char *)(package + 8));
     h->password = password;
@@ -296,7 +296,7 @@ BinaryData encodeTask(ChangeTask task){
 }
 
 TaskData decodeTask(uint8_t *package){
-    ChangeTask *task = new ChangeTask();
+    std::shared_ptr<ChangeTask> task(new ChangeTask());
     uint32_t pointerOffset = 0;
     uint16_t changeFlags = 0;
     getBytes((package + pointerOffset), &changeFlags);
@@ -417,7 +417,7 @@ BinaryData encodeUser(ChangeUser user){
 }
 
 UserData decodeUser(uint8_t *package){
-    ChangeUser *user = new ChangeUser();
+    std::shared_ptr<ChangeUser> user(new ChangeUser());
     uint32_t pointerOffset = 0;
     uint16_t changeFlags = 0;
     getBytes((package + pointerOffset), &changeFlags);
@@ -513,7 +513,7 @@ BinaryData encodeUserGroup(ChangeUserGroup userGroup){
 }
 
 UserGroupData decodeUserGroup(uint8_t *package){
-    ChangeUserGroup *userGroup = new ChangeUserGroup();
+    std::shared_ptr<ChangeUserGroup> userGroup(new ChangeUserGroup());
     uint32_t pointerOffset = 0;
     uint16_t changeFlags = 0;
     getBytes((package + pointerOffset), &changeFlags);
@@ -577,7 +577,7 @@ BinaryData encodeTaskGroup(ChangeTaskGroup taskGroup){
 }
 
 TaskGroupData decodeTaskGroup(uint8_t *package){
-    ChangeTaskGroup *taskGroup = new ChangeTaskGroup();
+    std::shared_ptr<ChangeTaskGroup> taskGroup(new ChangeTaskGroup());
     uint32_t pointerOffset = 0;
     uint16_t changeFlags = 0;
     getBytes((package + pointerOffset), &changeFlags);

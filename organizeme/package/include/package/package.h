@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <boost/variant.hpp>
+#include <memory>
 
 #include "changeuser.h"
 #include "changeusergroup.h"
@@ -27,23 +28,23 @@ struct BinaryData : Data {
 };
 
 struct TaskData : Data {
-    ChangeTask *task;
-    TaskData(ChangeTask *task, uint32_t size) : Data(size), task(task) {}
+    std::shared_ptr<ChangeTask> task;
+    TaskData(std::shared_ptr<ChangeTask> task, uint32_t size) : Data(size), task(task) {}
 };
 
 struct UserData : Data {
-    ChangeUser *user;
-    UserData(ChangeUser *user, uint32_t size) : Data(size), user(user) {}
+    std::shared_ptr<ChangeUser> user;
+    UserData(std::shared_ptr<ChangeUser> user, uint32_t size) : Data(size), user(user) {}
 };
 
 struct UserGroupData : Data {
-    ChangeUserGroup *userGroup;
-    UserGroupData(ChangeUserGroup *userGroup, uint32_t size) : Data(size), userGroup(userGroup) {}
+    std::shared_ptr<ChangeUserGroup> userGroup;
+    UserGroupData(std::shared_ptr<ChangeUserGroup> userGroup, uint32_t size) : Data(size), userGroup(userGroup) {}
 };
 
 struct TaskGroupData : Data {
-    ChangeTaskGroup *taskGroup;
-    TaskGroupData(ChangeTaskGroup *taskGroup, uint32_t size) : Data(size), taskGroup(taskGroup) {}
+    std::shared_ptr<ChangeTaskGroup> taskGroup;
+    TaskGroupData(std::shared_ptr<ChangeTaskGroup> taskGroup, uint32_t size) : Data(size), taskGroup(taskGroup) {}
 };
 
 struct Header {
@@ -65,26 +66,26 @@ struct Header {
 enum packageType {VEC_CHANGE_USER, VEC_CHANGE_USER_GROUP, VEC_CHANGE_TASK_GROUP, VEC_CHANGE_TASK};
 
 struct Package {
-    Header *header;
+    std::shared_ptr<Header> header;
     boost::variant<std::vector<ChangeUser>, std::vector<ChangeUserGroup>,
                  std::vector<ChangeTaskGroup>, std::vector<ChangeTask>> body;
     Package(
-            Header *header,
+            std::shared_ptr<Header> header,
             boost::variant<std::vector<ChangeUser>, std::vector<ChangeUserGroup>,
                            std::vector<ChangeTaskGroup>, std::vector<ChangeTask>> body
             ) : header(header), body(body) {}
 };
 
-uint8_t* encodePackage(Header &h, std::vector<ChangeUser> users);
-uint8_t* encodePackage(Header &h, std::vector<ChangeUserGroup> userGroups);
-uint8_t* encodePackage(Header &h, std::vector<ChangeTaskGroup> taskGroups);
-uint8_t* encodePackage(Header &h, std::vector<ChangeTask> tasks);
+uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeUser> users);
+uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeUserGroup> userGroups);
+uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeTaskGroup> taskGroups);
+uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeTask> tasks);
 
-Package* decodePackage(uint8_t *package);
+std::shared_ptr<Package> decodePackage(uint8_t *package);
 // Выделяет 44 байта на куче, формирует header и возвращает указатель на 44 байта
-uint8_t* encodeHeader(Header h);
+uint8_t* encodeHeader(std::shared_ptr<Header> h);
 
-Header* decodeHeader(uint8_t *package);
+std::shared_ptr<Header> decodeHeader(uint8_t *package);
 
 BinaryData encodeTask(ChangeTask task);
 

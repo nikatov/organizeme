@@ -1,17 +1,18 @@
 #include <vector>
+#include <memory>
 
 #include "package/package.h"
 
 int main(){
-    Header h;
-    h.idUser = 10;
-    h.password = "HelloWorld";
-    h.opType = ADD_TASK;
-    h.numOfOperations = 1;
+    std::shared_ptr<Header> h(new Header());
+    h->idUser = 10;
+    h->password = "HelloWorld";
+    h->opType = ADD_TASK;
+    h->numOfOperations = 1;
 
-    h.printInfo();
+    h->printInfo();
     uint8_t *header = encodeHeader(h);
-    Header *h2 = decodeHeader(header);
+    std::shared_ptr<Header> h2 = decodeHeader(header);
 
     h2->printInfo();
 
@@ -35,7 +36,7 @@ int main(){
 
     uint8_t *package = encodePackage(h, tasks);
 
-    Package* decodedPackage = decodePackage(package);
+    std::shared_ptr<Package> decodedPackage = decodePackage(package);
 
     switch (decodedPackage->body.which()){
         case VEC_CHANGE_USER:
@@ -48,7 +49,7 @@ int main(){
 
     // тестирование передачи данных user
     std::cout << "Test User ----------------------" << std::endl;
-    h.opType = ADD_USER;
+    h->opType = ADD_USER;
     std::vector<ChangeUser> users;
     ChangeUser user(1, "2", "3", "4", "5", "6");
     user.printInfo();
@@ -62,8 +63,8 @@ int main(){
 
     // Тестируем передачу UserGroup
     std::cout << "Test UserGroup ---------------" << std::endl;
-    h.opType = ADD_USER_GROUP;
-    h.numOfOperations = 2;
+    h->opType = ADD_USER_GROUP;
+    h->numOfOperations = 2;
     std::vector<ChangeUserGroup> userGroups;
     ChangeUserGroup userGroup1(1, "Spartans", false);
     userGroup1.printInfo();
@@ -81,7 +82,7 @@ int main(){
 
     // Тестирование передачи данных taskGroup
     std::cout << "Test taskGroup ----------------" << std::endl;
-    h.opType = ADD_TASK_GROUP;
+    h->opType = ADD_TASK_GROUP;
     ChangeTaskGroup chTaskGroup1(1, 2, "TASK#1");
     chTaskGroup1.printInfo();
     ChangeTaskGroup chTaskGroup2(55, 0, "");
@@ -97,7 +98,11 @@ int main(){
         v.at(1).printInfo();
     }
 
-    // delete[] decodedPackage;
+    delete[] header;
+    delete[] package;
+    delete[] encUser;
+    delete[] encUserGroup;
+    delete[] encTaskGroups;
 
     return 0;
 }
