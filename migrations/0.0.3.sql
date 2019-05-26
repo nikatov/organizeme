@@ -1,0 +1,1 @@
+ALTER TABLE tasks ALTER COLUMN id_place SET DEFAULT 1;

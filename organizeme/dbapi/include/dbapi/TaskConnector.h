@@ -2,12 +2,20 @@
 
 #include "package/changetask.h"
 
+#define str std::string
+
 enum fieldType {
   integer = 0,
   boolean,
   timestamp,
   interval,
   text
+};
+
+struct tuple {
+  str fields;
+  str parameters;
+  tuple(str f, str p) : fields(f), parameters(p) {}
 };
 
 class TaskConnector {
@@ -21,6 +29,7 @@ public:
   pqxx::result getTasksFromTaskGroupId(const int taskGroupId);
 
 private:
+  tuple getSqlParameters(ChangeTask &task);
   std::string stringWrapper(uint64_t &obj, fieldType type);
   std::string stringWrapper(std::string &obj, fieldType type);
 

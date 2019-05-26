@@ -9,10 +9,50 @@
 #include "TaskConnector.h"
 #include "package/changetask.h"
 
-#define str std::string
-
-// char fields[9][20] = { "id_task_group", "id_user", "is_finished", "time_planned", "time_doing_task", "time_deadline", "title", "description", "priority"};
-std::vector<std::string> fields({"id_task_group", "id_user", "is_finished", "time_planned", "time_doing_task", "time_deadline", "title", "description", "priority"});
+tuple TaskConnector::getSqlParameters(ChangeTask &task){
+    std::string parameters;
+    std::string fields;
+    if(task.getIdGroupTask() > 0){
+        fields += "id_task_group, ";
+        parameters += std::to_string(task.getIdGroupTask()) + ", ";
+    }
+    if(task.getIdUser() > 0){
+        fields += "id_user, ";
+        parameters += std::to_string(task.getIdUser()) + ", ";
+    }
+    if(task.getIsFinished()){
+        fields += "is_finished, ";
+        parameters += (task.getIsFinished() ? "true, " : "false, ");
+    }
+    if(task.getTimePlanned() > 0){
+        fields += "time_planned, ";
+        parameters += "timestamp '1970/01/01' + interval '" + std::to_string(task.getTimePlanned()) + " second', ";
+    }
+    if(task.getTimeDoingTask() > 0){
+        fields += "time_doing_task, ";
+        parameters += "'" + std::to_string(task.getTimeDoingTask()) + " second', ";
+    }
+    if(task.getTimeDeadline() > 0){
+        fields += "time_deadline, ";
+        parameters += "timestamp '1970/01/01' + interval '" + std::to_string(task.getTimeDeadline()) + " second', ";
+    }
+    if(!task.getTitle().empty()){
+        fields += "title, ";
+        parameters +=  "'" + task.getTitle() + "', ";
+    }
+    if(!task.getDescription().empty()){
+        fields += "description, ";
+        parameters +=  "'" + task.getDescription() + "', ";
+    }
+    if(task.getPriority() > 0){
+        fields += "priority, ";
+        parameters += std::to_string(task.getPriority()) + ", ";
+    }
+    fields.erase(fields.end()-2, fields.end());
+    parameters.erase(parameters.end()-2, parameters.end());
+    tuple t(fields, parameters);
+    return t;
+}
 
 std::string TaskConnector::stringWrapper(uint64_t &obj, enum fieldType type) {
   if(timestamp == type) {
@@ -29,45 +69,19 @@ std::string TaskConnector::stringWrapper(std::string &obj, fieldType type) {
 }
 
 uint TaskConnector::createTask(ChangeTask &task) {
-  std::string fields2 = "id_task_group, id_user, id_place, title";
-  std::string parameters = std::to_string(task.getIdGroupTask()) + str(", ")
-                         + std::to_string(task.getIdUser()) + str(", 1, '") + task.getTitle() + str("'");
-
-  uint64_t timePlanned = task.getTimePlanned();
-  uint64_t timeDoingTask = task.getTimeDoingTask();
-  uint64_t timeDeadline = task.getTimeDeadline();
-  str description = task.getDescription();
-  uint8_t priority = task.getPriority();
-  if(timePlanned){
-    fields2 += str(", time_planned");
-    parameters += stringWrapper(timePlanned, timestamp);
+  if(task.getIdGroupTask() && task.getIdUser() && !task.getTitle().empty()) {
+    tuple t = getSqlParameters(task);
+    std::cout << str("INSERT INTO tasks (") + t.fields + str(") VALUES (") + t.parameters + str(")") << std::endl;
+    pqxx::result r = txn.exec(str("INSERT INTO tasks (") + t.fields + str(") VALUES (") + t.parameters + str(") RETURNING id"));
+    return std::atoi(r[0][0].c_str());
   }
-  if(timeDoingTask){
-    fields2 += str(", time_doing_task");
-    parameters += stringWrapper(timeDoingTask, interval);
-  }
-  if(timeDeadline){
-    fields2 += str(", time_deadline");
-    parameters += stringWrapper(timeDeadline, timestamp);
-  }
-  if(!description.empty()){
-    fields2 += str(", description");
-    parameters += stringWrapper(description, text);
-  }
-  if(priority){
-    fields2 += str(", priority");
-    parameters += str(", ") + std::to_string(priority);
-  }
-
-  std::cout << str("INSERT INTO tasks (") + fields2 + str(") VALUES (") + parameters + str(")") << std::endl;
-
-  pqxx::result r = txn.exec(str("INSERT INTO tasks (") + fields2 + str(") VALUES (") + parameters + str(") RETURNING id"));
-  return std::atoi(r[0][0].c_str());
+  return 0;
 }
 
 void TaskConnector::updateTask(ChangeTask &task) {
-  // std::cout << str("UPDATE tasks SET (") + fields2 + str(") = (") + parameters + str(") WHERE id = ") + std::to_string(task.getId()) << std::endl;
-  // pqxx::result r = txn.exec("UPDATE tasks set id = " + txn.quote(task.getId()));
+  tuple t = getSqlParameters(task);
+  std::cout << str("UPDATE tasks SET (") + t.fields + str(") = (") + t.parameters + str(") WHERE id = ") + std::to_string(task.getId()) << std::endl;
+  pqxx::result r = txn.exec(str("UPDATE tasks SET (") + t.fields + str(") = (") + t.parameters + str(") WHERE id = ") + std::to_string(task.getId()));
 }
 
 void TaskConnector::deleteTask(ChangeTask &task) {

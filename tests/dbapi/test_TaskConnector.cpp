@@ -42,13 +42,17 @@ int main(int, char *argv[])
     // убедиться, что в последней строке именно тот changeTask который мы подали на вход
 
     task2.setId(taskId);
-    // taskConnector.updateTask(task2);
+    taskConnector.updateTask(task2);
 
     r = taskConnector.getTasksFromTaskGroupId(taskGroupId);
 
     beforeSize = afterSize;
     afterSize = r.size();
-    std::cout << "количество строк не изменилось (?): " << afterSize - beforeSize << std::endl;
+    if(afterSize != beforeSize){
+      std::cout << "количество строк изменилось после обновления (?): " << std::endl;
+      return 3;
+    }
+
     for (auto field: r.end()-1) std::cout << field.c_str() << " ";
     std::cout << std::endl;
 
@@ -58,26 +62,24 @@ int main(int, char *argv[])
 
     beforeSize = afterSize;
     afterSize = r.size();
-    std::cout << "количество строк убавилось на 1(?): " << afterSize - beforeSize << std::endl;
+    if(beforeSize - afterSize != 1) {
+      std::cout << "количество строк убавилось на 1(?): " << std::endl;
+      return 4;
+    }
+
     for (auto field: r.end()-1) std::cout << field.c_str() << " ";
     std::cout << std::endl;
 
-    // for (auto row: r)
-    // {
-    //   std::cout << "Row: ";
-    //   for (auto field: row) std::cout << field.c_str() << " ";
-    //   std::cout << std::endl;
-    // }
   }
   catch (const pqxx::sql_error &e)
   {
     std::cerr << "SQL error: " << e.what() << std::endl;
     std::cerr << "Query was: " << e.query() << std::endl;
-    return 2;
+    return 5;
   }
   catch (const std::exception &e)
   {
     std::cerr << "Error: " << e.what() << std::endl;
-    return 1;
+    return 6;
   }
 }
