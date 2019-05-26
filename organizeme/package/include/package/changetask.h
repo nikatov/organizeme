@@ -6,14 +6,14 @@
 
 #include "generictask.h"
 
-class ChangeTask : private GenericTask {
+class ChangeTask : public GenericTask {
     public:
-        ChangeTask() : GenericTask(-1, -1, -1, false, -1, -1, -1, "", "", -1) {}
-        ChangeTask(int64_t id, int64_t idGroupTask, int64_t idUser, bool isFinished,
-                   int64_t timePlanned, int64_t timeDoingTask, int64_t timeDeadLine,
-                  std::string title, std::string description, int8_t priority) :
-                  GenericTask(id, idGroupTask, idUser, isFinished, timePlanned,
-                  timeDoingTask, timeDeadLine, title, description, priority) {}
+        ChangeTask() : GenericTask(0, false, 0, 0, 0, "", "", 0), idGroupTask(0), idUser(0) {}
+        ChangeTask(uint64_t id, uint64_t idGroupTask, uint64_t idUser, bool isFinished,
+                   uint64_t timePlanned, uint64_t timeDoingTask, uint64_t timeDeadLine,
+                  std::string title, std::string description, uint8_t priority) :
+                  GenericTask(id, isFinished, timePlanned,
+                  timeDoingTask, timeDeadLine, title, description, priority), idGroupTask(idGroupTask), idUser(idUser) {}
         void printInfo() {
             std::cout << "Id: " << id << std::endl;
             std::cout << "IdGroupTask: " << idGroupTask << std::endl;
@@ -27,26 +27,12 @@ class ChangeTask : private GenericTask {
             std::cout << "Priority:  " << (uint64_t)priority  << std::endl;
         }
         // Геттеры
-        int64_t getId() { return id; }
-        int64_t getIdGroupTask() { return idGroupTask; }
-        int64_t getIdUser() { return idUser; }
-        bool getIsFinished() { return isFinished; }
-        int64_t getTimePlanned() { return timePlanned; }
-        int64_t getTimeDoingTask() { return timeDoingTask; }
-        int64_t getTimeDeadline() { return timeDeadline; }
-        std::string getTitle() { return title; }
-        std::string getDescription() { return description; }
-        int8_t getPriority() { return priority; }
+        uint64_t getIdGroupTask() { return idGroupTask; }
+        uint64_t getIdUser() { return idUser; }
         // Сеттеры
-        void setId(int64_t id) { this->id = id; }
-        void setIdGroupTask(int64_t idGroupTask) { this->idGroupTask = idGroupTask; }
-        void setIdUser(int64_t idUser) { this->idUser = idUser; }
-        void setIsFinished(bool isFinished) { this->isFinished = isFinished; }
-        void setTimePlanned(int64_t timePlanned) { this->timePlanned = timePlanned; }
-        void setTimeDoingTask(int64_t timeDoingTask) { this->timeDoingTask = timeDoingTask; }
-        void setTimeDeadline(int64_t timeDeadline) { this->timeDeadline = timeDeadline; }
-        void setTitle(std::string title) { this->title = title; }
-        void setDescription(std::string description) { this->description = description; }
-        void setPriority(int8_t priority) { this->priority = priority; }
+        void setIdGroupTask(uint64_t idGroupTask) { this->idGroupTask = idGroupTask; }
+        void setIdUser(uint64_t idUser) { this->idUser = idUser; }
     private:
+        uint64_t idGroupTask;       // id группы задач (Foreign Key)
+        uint64_t idUser;            // id пользователя (Foreign Key)
 };
