@@ -209,15 +209,15 @@ BinaryData encodeTask(ChangeTask task){
     // uint8_t opType = task.getOperationType();          // Тип операции
     uint16_t changeFlags = 0;       // Флаги изменения
     uint64_t sizeBytes = 2;
-    if(task.getId() >= 0) {
+    if(task.getId() > 0) {
         changeFlags |= 0x0001;
         sizeBytes += 8;
     }
-    if(task.getIdGroupTask() >= 0) {
+    if(task.getIdGroupTask() > 0) {
         changeFlags |= 0x0002;
         sizeBytes += 8;
     }
-    if(task.getIdUser() >= 0) {
+    if(task.getIdUser() > 0) {
         changeFlags |= 0x0004;
         sizeBytes += 8;
     }
@@ -225,15 +225,15 @@ BinaryData encodeTask(ChangeTask task){
         changeFlags |= 0x0008;
         sizeBytes += 1;
     }
-    if(task.getTimePlanned() >= 0) {
+    if(task.getTimePlanned() > 0) {
         changeFlags |= 0x0010;
         sizeBytes += 8;
     }
-    if(task.getTimeDoingTask() >= 0) {
+    if(task.getTimeDoingTask() > 0) {
         changeFlags |= 0x0020;
         sizeBytes += 8;
     }
-    if(task.getTimeDeadline() >= 0) {
+    if(task.getTimeDeadline() > 0) {
         changeFlags |= 0x0040;
         sizeBytes += 8;
     }
@@ -245,7 +245,7 @@ BinaryData encodeTask(ChangeTask task){
         changeFlags |= 0x0100;
         sizeBytes += task.getDescription().size() + 2;  // 2-байта под размер перед блоком
     }
-    if(task.getPriority() >= 0) {
+    if(task.getPriority() > 0) {
         changeFlags |= 0x0200;
         sizeBytes += 1;
     }
@@ -253,15 +253,15 @@ BinaryData encodeTask(ChangeTask task){
     // taskData.data[0] = (uint8_t) opType;
     writeBytes(changeFlags, (taskData.data));
     uint32_t pointerOffset = 2;
-    if(task.getId() >= 0) {
+    if(task.getId() > 0) {
         writeBytes((uint64_t)task.getId(), taskData.data + pointerOffset);
         pointerOffset += 8;
     }
-    if(task.getIdGroupTask() >= 0) {
+    if(task.getIdGroupTask() > 0) {
         writeBytes((uint64_t)task.getIdGroupTask(), taskData.data + pointerOffset);
         pointerOffset += 8;
     }
-    if(task.getIdUser() >= 0) {
+    if(task.getIdUser() > 0) {
         writeBytes((uint64_t)task.getIdUser(), taskData.data + pointerOffset);
         pointerOffset += 8;
     }
@@ -269,15 +269,15 @@ BinaryData encodeTask(ChangeTask task){
         taskData.data[pointerOffset] = 1;
         pointerOffset += 1;
     }
-    if(task.getTimePlanned() >= 0) {
+    if(task.getTimePlanned() > 0) {
         writeBytes((uint64_t)task.getTimePlanned(), taskData.data + pointerOffset);
         pointerOffset += 8;
     }
-    if(task.getTimeDoingTask() >= 0) {
+    if(task.getTimeDoingTask() > 0) {
         writeBytes((uint64_t)task.getTimeDoingTask(), taskData.data + pointerOffset);
         pointerOffset += 8;
     }
-    if(task.getTimeDeadline() >= 0) {
+    if(task.getTimeDeadline() > 0) {
         writeBytes((uint64_t)task.getTimeDeadline(), taskData.data + pointerOffset);
         pointerOffset += 8;
     }
@@ -289,7 +289,7 @@ BinaryData encodeTask(ChangeTask task){
         writeBytes(task.getDescription(), (taskData.data + pointerOffset));
         pointerOffset += task.getDescription().size() + 2;
     }
-    if(task.getPriority() >= 0) {
+    if(task.getPriority() > 0) {
         taskData.data[pointerOffset] = task.getPriority();
     }
     return taskData;
@@ -302,15 +302,15 @@ TaskData decodeTask(uint8_t *package){
     getBytes((package + pointerOffset), &changeFlags);
     pointerOffset += 2;
     if(changeFlags & 0x0001){
-        task->setId((int64_t) *(package + pointerOffset));
+        task->setId((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0002){
-        task->setIdGroupTask((int64_t) *(package + pointerOffset));
+        task->setIdGroupTask((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0004){
-        task->setIdUser((int64_t) *(package + pointerOffset));
+        task->setIdUser((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0008){
@@ -321,15 +321,15 @@ TaskData decodeTask(uint8_t *package){
         pointerOffset += 1;
     }
     if(changeFlags & 0x0010){
-        task->setTimePlanned((int64_t) *(package + pointerOffset));
+        task->setTimePlanned((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0020){
-        task->setTimeDoingTask((int64_t) *(package + pointerOffset));
+        task->setTimeDoingTask((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0040){
-        task->setTimeDeadline((int64_t) *(package + pointerOffset));
+        task->setTimeDeadline((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0080){
@@ -362,7 +362,7 @@ TaskData decodeTask(uint8_t *package){
 BinaryData encodeUser(ChangeUser user){
     uint16_t changeFlags = 0;       // Флаги изменения
     uint64_t sizeBytes = 2;
-    if(user.getId() >= 0) {
+    if(user.getId() > 0) {
         changeFlags |= 0x0001;
         sizeBytes += 8;
     }
@@ -389,7 +389,7 @@ BinaryData encodeUser(ChangeUser user){
     BinaryData userData(new uint8_t[sizeBytes], sizeBytes);
     writeBytes(changeFlags, (userData.data));
     uint32_t pointerOffset = 2;
-    if(user.getId() >= 0) {
+    if(user.getId() > 0) {
         writeBytes((uint64_t)user.getId(), userData.data + pointerOffset);
         pointerOffset += 8;
     }
@@ -423,7 +423,7 @@ UserData decodeUser(uint8_t *package){
     getBytes((package + pointerOffset), &changeFlags);
     pointerOffset += 2;
     if(changeFlags & 0x0001){
-        user->setId((int64_t) *(package + pointerOffset));
+        user->setId((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0002){
@@ -482,7 +482,7 @@ UserData decodeUser(uint8_t *package){
 BinaryData encodeUserGroup(ChangeUserGroup userGroup){
     uint16_t changeFlags = 0;       // Флаги изменения
     uint64_t sizeBytes = 2;
-    if(userGroup.getId() >= 0) {
+    if(userGroup.getId() > 0) {
         changeFlags |= 0x0001;
         sizeBytes += 8;
     }
@@ -491,13 +491,13 @@ BinaryData encodeUserGroup(ChangeUserGroup userGroup){
         sizeBytes += userGroup.getGroupName().size() + 2;
     }
     if(userGroup.getIsLocal()) {
-        changeFlags |= 0x0008;
+        changeFlags |= 0x0004;
         sizeBytes += 1;
     }
     BinaryData userGroupData(new uint8_t[sizeBytes], sizeBytes);
     writeBytes(changeFlags, (userGroupData.data));
     uint32_t pointerOffset = 2;
-    if(userGroup.getId() >= 0) {
+    if(userGroup.getId() > 0) {
         writeBytes((uint64_t)userGroup.getId(), userGroupData.data + pointerOffset);
         pointerOffset += 8;
     }
@@ -519,7 +519,7 @@ UserGroupData decodeUserGroup(uint8_t *package){
     getBytes((package + pointerOffset), &changeFlags);
     pointerOffset += 2;
     if(changeFlags & 0x0001){
-        userGroup->setId((int64_t) *(package + pointerOffset));
+        userGroup->setId((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0002){
@@ -545,11 +545,11 @@ UserGroupData decodeUserGroup(uint8_t *package){
 BinaryData encodeTaskGroup(ChangeTaskGroup taskGroup){
     uint16_t changeFlags = 0;       // Флаги изменения
     uint64_t sizeBytes = 2;
-    if(taskGroup.getId() >= 0) {
+    if(taskGroup.getId() > 0) {
         changeFlags |= 0x0001;
         sizeBytes += 8;
     }
-    if(taskGroup.getIdUserGroup() >= 0) {
+    if(taskGroup.getIdUserGroup() > 0) {
         changeFlags |= 0x0002;
         sizeBytes += 8;
     }
@@ -561,11 +561,11 @@ BinaryData encodeTaskGroup(ChangeTaskGroup taskGroup){
     BinaryData taskGroupData(new uint8_t[sizeBytes], sizeBytes);
     writeBytes(changeFlags, (taskGroupData.data));
     uint32_t pointerOffset = 2;
-    if(taskGroup.getId() >= 0) {
+    if(taskGroup.getId() > 0) {
         writeBytes((uint64_t)taskGroup.getId(), taskGroupData.data + pointerOffset);
         pointerOffset += 8;
     }
-    if(taskGroup.getIdUserGroup() >= 0) {
+    if(taskGroup.getIdUserGroup() > 0) {
         writeBytes((uint64_t)taskGroup.getIdUserGroup(), taskGroupData.data + pointerOffset);
         pointerOffset += 8;
     }
@@ -583,11 +583,11 @@ TaskGroupData decodeTaskGroup(uint8_t *package){
     getBytes((package + pointerOffset), &changeFlags);
     pointerOffset += 2;
     if(changeFlags & 0x0001){
-        taskGroup->setId((int64_t) *(package + pointerOffset));
+        taskGroup->setId((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0002){
-        taskGroup->setIdUserGroup((int64_t) *(package + pointerOffset));
+        taskGroup->setIdUserGroup((uint64_t) *(package + pointerOffset));
         pointerOffset += 8;
     }
     if(changeFlags & 0x0004){
