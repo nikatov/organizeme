@@ -76,10 +76,8 @@ struct Package {
             ) : header(header), body(body) {}
 };
 
-uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeUser> users);
-uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeUserGroup> userGroups);
-uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeTaskGroup> taskGroups);
-uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeTask> tasks);
+uint8_t* encodePackage(std::shared_ptr<Header> h, boost::variant<std::vector<ChangeUser>, std::vector<ChangeUserGroup>,
+                       std::vector<ChangeTaskGroup>, std::vector<ChangeTask>> changeObjs);
 
 std::shared_ptr<Package> decodePackage(uint8_t *package);
 // Выделяет 44 байта на куче, формирует header и возвращает указатель на 44 байта
