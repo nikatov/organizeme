@@ -9,6 +9,11 @@
 class ChangeTask : public GenericTask {
     public:
         ChangeTask() : GenericTask(0, false, 0, 0, 0, "", "", 0), idGroupTask(0), idUser(0) {}
+        ChangeTask(uint64_t id, uint64_t idGroupTask, uint64_t idUser, bool isFinished,
+                   uint64_t timePlanned, uint64_t timeDoingTask, uint64_t timeDeadLine,
+                  std::string title, std::string description, uint8_t priority) :
+                  GenericTask(id, isFinished, timePlanned,
+                  timeDoingTask, timeDeadLine, title, description, priority), idGroupTask(idGroupTask), idUser(idUser) {}
         void printInfo() {
             std::cout << "Id: " << id << std::endl;
             std::cout << "IdGroupTask: " << idGroupTask << std::endl;
