@@ -12,6 +12,9 @@ class Client {
             }
             return client;
         }
+        ~Client(){
+            delete user;
+        }
         // Функция для начала работы клиента
         void startClient();
         User* getUser() { return user; }

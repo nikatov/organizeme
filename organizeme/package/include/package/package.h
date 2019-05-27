@@ -25,6 +25,7 @@ struct Data {
 struct BinaryData : Data {
     uint8_t *data;
     BinaryData(uint8_t *data, uint32_t size) : Data(size), data(data) {}
+    ~BinaryData() { delete[] data; }
 };
 
 struct TaskData : Data {
@@ -52,6 +53,10 @@ struct Header {
     std::string password;
     uint32_t numOfOperations;
     operationType opType;
+
+    Header(){}
+    Header(uint64_t idUser, std::string password, uint32_t numOfOperations, operationType opType) :
+            idUser(idUser), password(password), numOfOperations(numOfOperations), opType(opType) {}
 
     void printInfo() {
         std::cout << "------- HEADER --------" << std::endl;

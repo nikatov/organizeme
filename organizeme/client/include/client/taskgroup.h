@@ -13,6 +13,12 @@ class TaskGroup : public GenericTaskGroup{
         TaskGroup(uint64_t id, UserGroup *userGroup, std::string name) :
                   GenericTaskGroup(id, name), userGroup(userGroup) {}
 
+        ~TaskGroup(){
+            for(auto t : tasks){
+                delete t;
+            }
+        }
+
         void addTask(Task *task);
         void changeTask(ChangeTask *changeTask);
         void deleteTask(uint64_t idTask);

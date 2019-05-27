@@ -13,6 +13,12 @@ class UserGroup : public GenericUserGroup {
     public:
         UserGroup(uint64_t id, std::string groupName, bool isLocal) : GenericUserGroup(id, groupName, isLocal) {}
 
+        ~UserGroup(){
+            for(auto tg : taskGroups){
+                delete tg;
+            }
+        }
+
         User* getUser() { return user; }
         void addTaskGroup(TaskGroup *taskGroup);
         void changeTaskGroup(ChangeTaskGroup *changeTaskGroup);
