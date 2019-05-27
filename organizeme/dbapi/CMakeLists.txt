@@ -1,6 +1,6 @@
 # Список файлов, состовляющих данный модуль
-set(SRC_FILES TaskConnector.cpp TaskGroupConnector.cpp UserGroupConnector.cpp UserConnector.cpp core.cpp)
-set(INCLUDE_FILES TaskConnector.h TaskGroupConnector.h UserGroupConnector.h UserConnector.h core.h)
+set(SRC_FILES core.cpp taskconnector.cpp taskgroupconnector.cpp userconnector.cpp usergroupconnector.cpp)
+set(INCLUDE_FILES core.h taskconnector.h taskgroupconnector.h userconnector.h usergroupconnector.h)
 
 # Подключаем модуль addprefix
 include(addprefix)
@@ -12,7 +12,7 @@ addprefix(include/dbapi/ INCLUDE_FILES)
 # Прилинковать либы:
 add_library(dbapi STATIC ${SRC_FILES} ${INCLUDE_FILES})
 
-target_link_libraries(dbapi package pqxx ${PQXX_LIBRARIES})
+target_link_libraries(dbapi package ${PQXX_LIBRARIES})
 
 target_include_directories(dbapi PRIVATE ${PQXX_INCLUDE_DIRECTORIES})
 # Внутри модуля подключение заголовочных файлов происходит через #include "header.h"

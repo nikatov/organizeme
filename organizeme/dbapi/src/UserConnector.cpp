@@ -1,4 +1,3 @@
-#include <iostream>
 #include <pqxx/pqxx>
 #include <string>
 #include <vector>
@@ -7,7 +6,7 @@
 #include <stdio.h>
 
 #include "package/changeuser.h"
-#include "UserConnector.h"
+#include "userconnector.h"
 
 tuple UserConnector::getSqlParameters(ChangeUser &user){
   tuple t;
@@ -23,27 +22,24 @@ tuple UserConnector::getSqlParameters(ChangeUser &user){
 uint UserConnector::createUser(ChangeUser &user) {
   if(!user.getUsername().empty() && !user.getFirstName().empty() && !user.getLastName().empty() && !user.getPassword().empty()) {
     tuple t = getSqlParameters(user);
-    std::cout << str("INSERT INTO users (") + t.fields + str(") VALUES (") + t.parameters + str(") RETURNING id") << std::endl;
     pqxx::result r = txn.exec(str("INSERT INTO users (") + t.fields + str(") VALUES (") + t.parameters + str(") RETURNING id"));
     return std::atoi(r[0][0].c_str());
   }
-  std::cout << "Какое-то из полей пустое" << std::endl;
+  std::cout << "Error. Какое-то из необходимых полей пустое" << std::endl;
   return 0;
 }
 
 void UserConnector::updateUser(ChangeUser &user) {
   if(user.getId() > 0){
     tuple t = getSqlParameters(user);
-    std::cout << str("UPDATE users SET (") + t.fields + str(") = (") + t.parameters + str(") WHERE id = ") + std::to_string(user.getId()) << std::endl;
     pqxx::result r = txn.exec(str("UPDATE users SET (") + t.fields + str(") = (") + t.parameters + str(") WHERE id = ") + std::to_string(user.getId()));
   }
   else{
-    std::cout << "Передан id < 0" << std::endl;
+    std::cout << "Error. Передан id < 0" << std::endl;
   }
 }
 
 void UserConnector::deleteUser(ChangeUser &user) {
-  std::cout << "DELETE FROM users WHERE id = " + txn.quote(user.getId()) << std::endl;
   pqxx::result r = txn.exec("DELETE FROM users WHERE id = " + txn.quote(user.getId()));
 }
 
