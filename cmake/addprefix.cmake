@@ -1,0 +1,8 @@
+macro(addprefix prefix list)
+  set(${list}_TMP)
+  foreach(item ${${list}})
+    list(APPEND ${list}_TMP ${prefix}${item})
+  endforeach()
+  set(${list} ${${list}_TMP})
+  UNSET(${list}_TMP)
+endmacro(addprefix)
