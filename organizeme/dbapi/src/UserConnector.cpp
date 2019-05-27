@@ -6,50 +6,18 @@
 #include <clocale>
 #include <stdio.h>
 
-#include "UserConnector.h"
 #include "package/changeuser.h"
+#include "UserConnector.h"
 
-UserConnector::tuple UserConnector::getSqlParameters(ChangeUser &user){
-    std::string parameters;
-    std::string fields;
-    if(!user.getUsername().empty()){
-        fields += "username, ";
-        parameters += "'" + str(user.getUsername()) + "', ";
-    }
-    if(!user.getFirstName().empty()){
-        fields += "first_name, ";
-        parameters += "'" + str(user.getFirstName()) + "', ";
-    }
-    if(!user.getLastName().empty()){
-        fields += "last_name, ";
-        parameters += "'" + str(user.getLastName()) + "', ";
-    }
-    if(!user.getPatronymic().empty()){
-        fields += "patronymic, ";
-        parameters += "'" + str(user.getPatronymic()) + "', ";
-    }
-    if(!user.getPassword().empty()){
-        fields += "password, ";
-        parameters += "'" + str(user.getPassword()) + "', ";
-    }
-    fields.erase(fields.end()-2, fields.end());
-    parameters.erase(parameters.end()-2, parameters.end());
-    tuple t(fields, parameters);
-    return t;
-}
-
-std::string UserConnector::stringWrapper(uint64_t &obj, enum fieldType type) {
-  if(timestamp == type) {
-    return str(", timestamp '1970/01/01' + interval '") + std::to_string(obj) + str(" second'");
-  }
-  else if(interval == type) {
-    return str(", '") + std::to_string(obj) + str(" second'");
-  }
-  return str(", ") + std::to_string(obj);
-}
-
-std::string UserConnector::stringWrapper(std::string &obj, fieldType type) {
-  return str(", '") + str(obj) + str("'");
+tuple UserConnector::getSqlParameters(ChangeUser &user){
+  tuple t;
+  t += setField("username", user.getUsername(), text);
+  t += setField("first_name", user.getFirstName(), text);
+  t += setField("last_name", user.getLastName(), text);
+  t += setField("patronymic", user.getPatronymic(), text);
+  t += setField("password", user.getPassword(), text);
+  t.delLastComma();
+  return t;
 }
 
 uint UserConnector::createUser(ChangeUser &user) {
@@ -79,6 +47,6 @@ void UserConnector::deleteUser(ChangeUser &user) {
   pqxx::result r = txn.exec("DELETE FROM users WHERE id = " + txn.quote(user.getId()));
 }
 
-pqxx::result UserConnector::getUsersFromUserGroupId(const int userGroupId) {
-  return txn.exec("SELECT * FROM users WHERE id_user_group = " + txn.quote(userGroupId));
+pqxx::result UserConnector::getUserGroupsFromUser(ChangeUser &user) {
+  return txn.exec("SELECT * FROM user_user_group WHERE id_user = " + txn.quote(user.getId()));
 }

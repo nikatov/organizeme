@@ -6,34 +6,15 @@
 #include <clocale>
 #include <stdio.h>
 
-#include "UserGroupConnector.h"
 #include "package/changeusergroup.h"
+#include "UserGroupConnector.h"
+#include "core.h"
 
-UserGroupConnector::tuple UserGroupConnector::getSqlParameters(ChangeUserGroup &userGroup){
-    std::string parameters;
-    std::string fields;
-    if(!userGroup.getGroupName().empty()){
-        fields += "name, ";
-        parameters += "'" + str(userGroup.getGroupName()) + "', ";
-    }
-    fields.erase(fields.end()-2, fields.end());
-    parameters.erase(parameters.end()-2, parameters.end());
-    tuple t(fields, parameters);
+tuple UserGroupConnector::getSqlParameters(ChangeUserGroup &userGroup){
+    tuple t;
+    t += setField("name", userGroup.getGroupName(), text);
+    t.delLastComma();
     return t;
-}
-
-std::string UserGroupConnector::stringWrapper(uint64_t &obj, enum fieldType type) {
-  if(timestamp == type) {
-    return str(", timestamp '1970/01/01' + interval '") + std::to_string(obj) + str(" second'");
-  }
-  else if(interval == type) {
-    return str(", '") + std::to_string(obj) + str(" second'");
-  }
-  return str(", ") + std::to_string(obj);
-}
-
-std::string UserGroupConnector::stringWrapper(std::string &obj, fieldType type) {
-  return str(", '") + str(obj) + str("'");
 }
 
 uint UserGroupConnector::createUserGroup(ChangeUserGroup &userGroup) {

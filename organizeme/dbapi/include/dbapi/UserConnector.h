@@ -1,8 +1,9 @@
+#pragma once
+
 #include <pqxx/pqxx>
 
 #include "package/changeuser.h"
-
-#define str std::string
+#include "core.h"
 
 class UserConnector {
 public:
@@ -12,26 +13,13 @@ public:
   uint createUser(ChangeUser &user);
   void updateUser(ChangeUser &user);
   void deleteUser(ChangeUser &user);
-  pqxx::result getUsersFromUserGroupId(const int taskGroupId);
+
+  pqxx::result getUserGroupsFromUser(ChangeUser &user);
+
   void commit() { txn.commit(); }
 private:
-  enum fieldType {
-    integer = 0,
-    boolean,
-    timestamp,
-    interval,
-    text
-  };
-
-  struct tuple {
-    str fields;
-    str parameters;
-    tuple(str f, str p) : fields(f), parameters(p) {}
-  };
 
   tuple getSqlParameters(ChangeUser &user);
-  std::string stringWrapper(uint64_t &obj, fieldType type);
-  std::string stringWrapper(std::string &obj, fieldType type);
 
   pqxx::work txn;
 };

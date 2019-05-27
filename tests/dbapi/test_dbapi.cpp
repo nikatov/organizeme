@@ -20,6 +20,7 @@ std::cout << i++ << std::endl;
     uint taskGroupId = 1;
 
     ChangeTask task1(1, 1, 1, false, 1, 672, 1, "Hello", "world", 1);
+    task1.printInfo();
     ChangeTask task2(1, 1, 1, true, 1558823076, 1000, 1558823076, "Hello", "New World!!1!", 5);
 
     pqxx::connection c{"dbname=organizeme user=destr0y"};

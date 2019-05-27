@@ -6,38 +6,15 @@
 #include <clocale>
 #include <stdio.h>
 
-#include "TaskGroupConnector.h"
 #include "package/changetaskgroup.h"
+#include "TaskGroupConnector.h"
 
-TaskGroupConnector::tuple TaskGroupConnector::getSqlParameters(ChangeTaskGroup &task){
-    std::string parameters;
-    std::string fields;
-    if(task.getIdUserGroup() > 0){
-      fields += "id_user_group, ";
-      parameters += std::to_string(task.getIdUserGroup()) + ", ";
-    }
-    if(!task.getName().empty()){
-        fields += "name, ";
-        parameters += "'" + task.getName() + "', ";
-    }
-    fields.erase(fields.end()-2, fields.end());
-    parameters.erase(parameters.end()-2, parameters.end());
-    tuple t(fields, parameters);
+tuple TaskGroupConnector::getSqlParameters(ChangeTaskGroup &task){
+    tuple t;
+    t += setField("id_user_group", task.getIdUserGroup(), integer);
+    t += setField("name", task.getName(), text);
+    t.delLastComma();
     return t;
-}
-
-std::string TaskGroupConnector::stringWrapper(uint64_t &obj, enum fieldType type) {
-  if(timestamp == type) {
-    return str(", timestamp '1970/01/01' + interval '") + std::to_string(obj) + str(" second'");
-  }
-  else if(interval == type) {
-    return str(", '") + std::to_string(obj) + str(" second'");
-  }
-  return str(", ") + std::to_string(obj);
-}
-
-std::string TaskGroupConnector::stringWrapper(std::string &obj, fieldType type) {
-  return str(", '") + str(obj) + str("'");
 }
 
 uint TaskGroupConnector::createTaskGroup(ChangeTaskGroup &task) {
