@@ -1,15 +1,38 @@
+#include <boost/variant.hpp>
+
 #include "package.h"
 
-uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeUser> users) {
+uint8_t* encodePackage(std::shared_ptr<Header> h, boost::variant<std::vector<ChangeUser>, std::vector<ChangeUserGroup>,
+                       std::vector<ChangeTaskGroup>, std::vector<ChangeTask>> changeObjs) {
     // Закодируем заголовок
     uint8_t *header = encodeHeader(h);
-    std::vector<BinaryData> usersEncoded;
+    std::vector<BinaryData> objsEncoded;
     // Размер заголовка -- 48 байт
     uint64_t packageSize = 48;
-    // Кодируем все переданные на изменение объекты и вычисляем общий размер пакета
-    for(uint32_t i = 0; i < users.size(); ++i){
-        usersEncoded.push_back(encodeUser(users.at(i)));
-        packageSize += usersEncoded.at(i).size;
+    if(changeObjs.which() == VEC_CHANGE_USER){
+        std::vector<ChangeUser> vec = boost::get<std::vector<ChangeUser>>(changeObjs);
+        for(auto changeUser : vec){
+            objsEncoded.push_back(encodeUser(changeUser));
+            packageSize += objsEncoded[objsEncoded.size()-1].size;
+        }
+    } else if(changeObjs.which() == VEC_CHANGE_USER_GROUP){
+        std::vector<ChangeUserGroup> vec = boost::get<std::vector<ChangeUserGroup>>(changeObjs);
+        for(auto changeUserGroup : vec){
+            objsEncoded.push_back(encodeUserGroup(changeUserGroup));
+            packageSize += objsEncoded[objsEncoded.size()-1].size;
+        }
+    } else if(changeObjs.which() == VEC_CHANGE_TASK_GROUP){
+        std::vector<ChangeTaskGroup> vec = boost::get<std::vector<ChangeTaskGroup>>(changeObjs);
+        for(auto changeTaskGroup : vec){
+            objsEncoded.push_back(encodeTaskGroup(changeTaskGroup));
+            packageSize += objsEncoded[objsEncoded.size()-1].size;
+        }
+    } else if(changeObjs.which() == VEC_CHANGE_TASK) {
+        std::vector<ChangeTask> vec = boost::get<std::vector<ChangeTask>>(changeObjs);
+        for(auto changeTask : vec){
+            objsEncoded.push_back(encodeTask(changeTask));
+            packageSize += objsEncoded[objsEncoded.size()-1].size;
+        }
     }
     // Выделяем память под пакет
     uint8_t *package = new uint8_t[packageSize];
@@ -19,118 +42,16 @@ uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeUser> users)
     }
     uint64_t curPackageSize = 48;
     // Записываем таски в пакет
-    for(uint32_t k = 0; k < usersEncoded.size(); ++k){
-        for(uint32_t i = 0; i < usersEncoded.at(k).size; ++i){
-            package[curPackageSize] = usersEncoded.at(k).data[i];
+    for(uint32_t k = 0; k < objsEncoded.size(); ++k){
+        for(uint32_t i = 0; i < objsEncoded.at(k).size; ++i){
+            package[curPackageSize] = objsEncoded.at(k).data[i];
             ++curPackageSize;
         }
     }
     // Освобождаем память
     delete[] header;
-    for(uint32_t i = 0; i < usersEncoded.size(); ++i){
-        delete[] usersEncoded.at(i).data;
-    }
-    // Возвращаем результат
-    return package;
-}
-
-uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeUserGroup> userGroups) {
-    // Закодируем заголовок
-    uint8_t *header = encodeHeader(h);
-    std::vector<BinaryData> userGroupsEncoded;
-    // Размер заголовка -- 48 байт
-    uint64_t packageSize = 48;
-    // Кодируем все переданные на изменение объекты и вычисляем общий размер пакета
-    for(uint32_t i = 0; i < userGroups.size(); ++i){
-        userGroupsEncoded.push_back(encodeUserGroup(userGroups.at(i)));
-        packageSize += userGroupsEncoded.at(i).size;
-    }
-    // Выделяем память под пакет
-    uint8_t *package = new uint8_t[packageSize];
-    // Записываем заголовок в пакет
-    for(uint32_t i = 0; i < 48; ++i){
-        package[i] = header[i];
-    }
-    uint64_t curPackageSize = 48;
-    // Записываем таски в пакет
-    for(uint32_t k = 0; k < userGroupsEncoded.size(); ++k){
-        for(uint32_t i = 0; i < userGroupsEncoded.at(k).size; ++i){
-            package[curPackageSize] = userGroupsEncoded.at(k).data[i];
-            ++curPackageSize;
-        }
-    }
-    // Освобождаем память
-    delete[] header;
-    for(uint32_t i = 0; i < userGroupsEncoded.size(); ++i){
-        delete[] userGroupsEncoded.at(i).data;
-    }
-    // Возвращаем результат
-    return package;
-}
-
-uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeTaskGroup> taskGroups) {
-    // Закодируем заголовок
-    uint8_t *header = encodeHeader(h);
-    std::vector<BinaryData> taskGroupsEncoded;
-    // Размер заголовка -- 48 байт
-    uint64_t packageSize = 48;
-    // Кодируем все переданные на изменение объекты и вычисляем общий размер пакета
-    for(uint32_t i = 0; i < taskGroups.size(); ++i){
-        taskGroupsEncoded.push_back(encodeTaskGroup(taskGroups.at(i)));
-        packageSize += taskGroupsEncoded.at(i).size;
-    }
-    // Выделяем память под пакет
-    uint8_t *package = new uint8_t[packageSize];
-    // Записываем заголовок в пакет
-    for(uint32_t i = 0; i < 48; ++i){
-        package[i] = header[i];
-    }
-    uint64_t curPackageSize = 48;
-    // Записываем таски в пакет
-    for(uint32_t k = 0; k < taskGroupsEncoded.size(); ++k){
-        for(uint32_t i = 0; i < taskGroupsEncoded.at(k).size; ++i){
-            package[curPackageSize] = taskGroupsEncoded.at(k).data[i];
-            ++curPackageSize;
-        }
-    }
-    // Освобождаем память
-    delete[] header;
-    for(uint32_t i = 0; i < taskGroupsEncoded.size(); ++i){
-        delete[] taskGroupsEncoded.at(i).data;
-    }
-    // Возвращаем результат
-    return package;
-}
-
-uint8_t* encodePackage(std::shared_ptr<Header> h, std::vector<ChangeTask> tasks) {
-    // Закодируем заголовок
-    uint8_t *header = encodeHeader(h);
-    std::vector<BinaryData> tasksEncoded;
-    // Размер заголовка -- 48 байт
-    uint64_t packageSize = 48;
-    // Кодируем все переданные на изменение объекты и вычисляем общий размер пакета
-    for(uint32_t i = 0; i < tasks.size(); ++i){
-        tasksEncoded.push_back(encodeTask(tasks.at(i)));
-        packageSize += tasksEncoded.at(i).size;
-    }
-    // Выделяем память под пакет
-    uint8_t *package = new uint8_t[packageSize];
-    // Записываем заголовок в пакет
-    for(uint32_t i = 0; i < 48; ++i){
-        package[i] = header[i];
-    }
-    uint64_t curPackageSize = 48;
-    // Записываем таски в пакет
-    for(uint32_t k = 0; k < tasksEncoded.size(); ++k){
-        for(uint32_t i = 0; i < tasksEncoded.at(k).size; ++i){
-            package[curPackageSize] = tasksEncoded.at(k).data[i];
-            ++curPackageSize;
-        }
-    }
-    // Освобождаем память
-    delete[] header;
-    for(uint32_t i = 0; i < tasksEncoded.size(); ++i){
-        delete[] tasksEncoded.at(i).data;
+    for(uint32_t i = 0; i < objsEncoded.size(); ++i){
+        delete[] objsEncoded.at(i).data;
     }
     // Возвращаем результат
     return package;
