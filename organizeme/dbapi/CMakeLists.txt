@@ -1,6 +1,6 @@
 # Список файлов, состовляющих данный модуль
-set(SRC_FILES TaskConnector.cpp)
-set(INCLUDE_FILES TaskConnector.h)
+set(SRC_FILES TaskConnector.cpp TaskGroupConnector.cpp UserGroupConnector.cpp UserConnector.cpp core.cpp)
+set(INCLUDE_FILES TaskConnector.h TaskGroupConnector.h UserGroupConnector.h UserConnector.h core.h)
 
 # Подключаем модуль addprefix
 include(addprefix)

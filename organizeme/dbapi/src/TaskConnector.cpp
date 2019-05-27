@@ -6,72 +6,29 @@
 #include <clocale>
 #include <stdio.h>
 
-#include "TaskConnector.h"
 #include "package/changetask.h"
+#include "TaskConnector.h"
+#include "core.h"
 
 tuple TaskConnector::getSqlParameters(ChangeTask &task){
-    std::string parameters;
-    std::string fields;
-    if(task.getIdGroupTask() > 0){
-        fields += "id_task_group, ";
-        parameters += std::to_string(task.getIdGroupTask()) + ", ";
-    }
-    if(task.getIdUser() > 0){
-        fields += "id_user, ";
-        parameters += std::to_string(task.getIdUser()) + ", ";
-    }
-    if(task.getIsFinished()){
-        fields += "is_finished, ";
-        parameters += (task.getIsFinished() ? "true, " : "false, ");
-    }
-    if(task.getTimePlanned() > 0){
-        fields += "time_planned, ";
-        parameters += "timestamp '1970/01/01' + interval '" + std::to_string(task.getTimePlanned()) + " second', ";
-    }
-    if(task.getTimeDoingTask() > 0){
-        fields += "time_doing_task, ";
-        parameters += "'" + std::to_string(task.getTimeDoingTask()) + " second', ";
-    }
-    if(task.getTimeDeadline() > 0){
-        fields += "time_deadline, ";
-        parameters += "timestamp '1970/01/01' + interval '" + std::to_string(task.getTimeDeadline()) + " second', ";
-    }
-    if(!task.getTitle().empty()){
-        fields += "title, ";
-        parameters +=  "'" + task.getTitle() + "', ";
-    }
-    if(!task.getDescription().empty()){
-        fields += "description, ";
-        parameters +=  "'" + task.getDescription() + "', ";
-    }
-    if(task.getPriority() > 0){
-        fields += "priority, ";
-        parameters += std::to_string(task.getPriority()) + ", ";
-    }
-    fields.erase(fields.end()-2, fields.end());
-    parameters.erase(parameters.end()-2, parameters.end());
-    tuple t(fields, parameters);
+    tuple t;
+    t += setField("id_task_group", task.getIdGroupTask(), integer);
+    t += setField("id_user", task.getIdUser(), integer);
+    t += setField("is_finished", task.getIsFinished(), boolean);
+    t += setField("time_planned", task.getTimePlanned(), timestamp);
+    t += setField("time_doing_task", task.getTimeDoingTask(), interval);
+    t += setField("time_deadline", task.getTimeDeadline(), timestamp);
+    t += setField("title", task.getTitle(), integer);
+    t += setField("description", task.getDescription(), integer);
+    t += setField("priority", task.getPriority(), integer);
+    t.delLastComma();
     return t;
-}
-
-std::string TaskConnector::stringWrapper(uint64_t &obj, enum fieldType type) {
-  if(timestamp == type) {
-    return str(", timestamp '1970/01/01' + interval '") + std::to_string(obj) + str(" second'");
-  }
-  else if(interval == type) {
-    return str(", '") + std::to_string(obj) + str(" second'");
-  }
-  return str(", ") + std::to_string(obj);
-}
-
-std::string TaskConnector::stringWrapper(std::string &obj, fieldType type) {
-  return str(", '") + str(obj) + str("'");
 }
 
 uint TaskConnector::createTask(ChangeTask &task) {
   if(task.getIdGroupTask() && task.getIdUser() && !task.getTitle().empty()) {
     tuple t = getSqlParameters(task);
-    std::cout << str("INSERT INTO tasks (") + t.fields + str(") VALUES (") + t.parameters + str(")") << std::endl;
+    std::cout << str("INSERT INTO tasks (") + t.fields + str(") VALUES (") + t.parameters + str(") RETURNING id") << std::endl;
     pqxx::result r = txn.exec(str("INSERT INTO tasks (") + t.fields + str(") VALUES (") + t.parameters + str(") RETURNING id"));
     return std::atoi(r[0][0].c_str());
   }
@@ -85,6 +42,7 @@ void TaskConnector::updateTask(ChangeTask &task) {
 }
 
 void TaskConnector::deleteTask(ChangeTask &task) {
+  std::cout << "DELETE FROM tasks WHERE id = " + txn.quote(task.getId()) << std::endl;
   pqxx::result r = txn.exec("DELETE FROM tasks WHERE id = " + txn.quote(task.getId()));
 }
 
